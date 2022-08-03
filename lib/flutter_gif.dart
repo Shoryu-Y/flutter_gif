@@ -14,7 +14,7 @@ import 'package:flutter/widgets.dart';
 
 /// cache gif fetched image
 class GifCache {
-  final Map<String, List<ImageInfo>> caches = Map();
+  final caches = Map<String, List<ImageInfo>>();
 
   void clear() {
     caches.clear();
@@ -31,18 +31,19 @@ class GifCache {
 
 /// control gif
 class FlutterGifController extends AnimationController {
-  FlutterGifController(
-      {required TickerProvider vsync,
-      double value = 0.0,
-      Duration? reverseDuration,
-      Duration? duration,
-      AnimationBehavior? animationBehavior})
-      : super.unbounded(
-            value: value,
-            reverseDuration: reverseDuration,
-            duration: duration,
-            animationBehavior: animationBehavior ?? AnimationBehavior.normal,
-            vsync: vsync);
+  FlutterGifController({
+    required TickerProvider vsync,
+    double value = 0.0,
+    Duration? reverseDuration,
+    Duration? duration,
+    AnimationBehavior? animationBehavior,
+  }) : super.unbounded(
+          value: value,
+          reverseDuration: reverseDuration,
+          duration: duration,
+          animationBehavior: animationBehavior ?? AnimationBehavior.normal,
+          vsync: vsync,
+        );
 
   @override
   void reset() {
@@ -68,6 +69,7 @@ class GifImage extends StatefulWidget {
     this.matchTextDirection = false,
     this.gaplessPlayback = false,
   });
+
   final VoidCallback? onFetchCompleted;
   final FlutterGifController controller;
   final ImageProvider image;
@@ -96,6 +98,7 @@ class GifImageState extends State<GifImage> {
   List<ImageInfo>? _infos;
   int _curIndex = 0;
   bool _fetchComplete = false;
+
   ImageInfo? get _imageInfo {
     if (!_fetchComplete) return null;
     return _infos == null ? null : _infos?[_curIndex];
@@ -232,7 +235,7 @@ Future<List<ImageInfo>> fetchGif(ImageProvider provider) async {
     data = provider.bytes;
   }
 
-  ui.Codec codec = await PaintingBinding.instance!
+  ui.Codec codec = await PaintingBinding.instance
       .instantiateImageCodec(data.buffer.asUint8List());
   infos = [];
   for (int i = 0; i < codec.frameCount; i++) {

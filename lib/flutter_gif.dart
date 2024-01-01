@@ -204,7 +204,6 @@ HttpClient get _httpClient {
 
 Future<List<ImageInfo>> fetchGif(ImageProvider provider) async {
   List<ImageInfo> infos = [];
-  dynamic data;
   String key = provider is NetworkImage
       ? provider.url
       : provider is AssetImage
@@ -216,6 +215,8 @@ Future<List<ImageInfo>> fetchGif(ImageProvider provider) async {
     infos = GifImage.cache.caches[key]!;
     return infos;
   }
+
+  late final ImmutableBuffer buffer;
   if (provider is NetworkImage) {
     final Uri resolved = Uri.base.resolve(provider.url);
     final HttpClientRequest request = await _httpClient.getUrl(resolved);
@@ -223,19 +224,22 @@ Future<List<ImageInfo>> fetchGif(ImageProvider provider) async {
       request.headers.add(name, value);
     });
     final HttpClientResponse response = await request.close();
-    data = await consolidateHttpClientResponseBytes(
+    final bytes = await consolidateHttpClientResponseBytes(
       response,
     );
+    buffer = await ImmutableBuffer.fromUint8List(bytes);
   } else if (provider is AssetImage) {
     AssetBundleImageKey key = await provider.obtainKey(ImageConfiguration());
-    data = await key.bundle.load(key.name);
+    buffer = await ImmutableBuffer.fromAsset(key.name);
   } else if (provider is FileImage) {
-    data = await provider.file.readAsBytes();
+    final bytes = provider.file.readAsBytesSync();
+    buffer = await ImmutableBuffer.fromUint8List(bytes);
   } else if (provider is MemoryImage) {
-    data = provider.bytes;
+    final bytes = provider.bytes;
+    buffer = await ImmutableBuffer.fromUint8List(bytes);
   }
 
-  ui.Codec codec = await PaintingBinding.instance.instantiateImageCodecWithSize(data.buffer);
+  ui.Codec codec = await PaintingBinding.instance.instantiateImageCodecWithSize(buffer);
   infos = [];
   for (int i = 0; i < codec.frameCount; i++) {
     FrameInfo frameInfo = await codec.getNextFrame();
